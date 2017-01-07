@@ -1,0 +1,3 @@
+#!/bin/bash
+
+outgpio 10 0

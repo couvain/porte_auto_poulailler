@@ -1,0 +1,57 @@
+# Matériel utilisé
+
+Module régulateur convertisseur de tension step down DC-DC 9V/12V/24V vers 5V US (4.49 € sur eBay)
+Pour convertir le 12 V de la batterie en 5V via USB pour alimenter le Raspberry Pi
+
+Raspberry Pi Modèle A+ 512 Mb - http://raspbian-france.fr/raspberry-pi-a-plus/  ( 20 € en 2017)
+Choisi sur des critères de consommation électrique - n'a pas de connecteur réseau
+
+Carte microSD 16 Go (10 €)
+Pour le stockage du système d'exploitation du Raspberry Pi, et de tout le reste
+
+Module SainSmart 8-Channel Relay (12,68 € sur eBay)
+Les relais de commande du moteur, du signal d'alerte, d'alimentation de l'amplificateur audio
+
+Module Adafruit TSL2591 - Capteur de lumière (8 €)
+Pour détecter si la luminosité extérieure est suffiante pour ouvrir la porte
+
+Module Adafruit Horloge temps réel PCF8523 (6.55 € en 2017 sur eBay)
+Le raspberry Pi a besoin d'être à l'heure pour savoir si c'est le matin ou le soir, on prend le moins cher et le moins précis des modules AdaFruit.
+
+Pile CR1220 3V (1.80 €)
+Pour le module horloge temps réel
+
+Moteur réducteur "1107" Pololu (21.07 €)
+
+Moyeu pour moteurs Pololu  (8.05 €)
+
+Support pour moteur "37D" (5.44 €)
+
+Fixation moteur Pololu
+https://www.pololu.com/product/1084
+
+Roue a gorge Nylon
+Pour enrouler la ficelle, 
+
+Ficelle
+
+Nappe 40 broches pour Raspberry Pi + extrémités dupont
+
+Fil téléphonique (plusieurs mètres non comptabilisés)
+
+
+## Capteurs
+
+2 x TM-1704 Charniere courte levier a galet Momentanee Micro Fin de course (2 x 2.10 € en 2017 sur eBay)
+Pour les positions haute et basse de la porte
+
+4x 12V Push Button Switch Boutons-poussoir Arcade Durable Multicade MAME Jamma Game  (4 x 1.08 € en 2017)
+4 boutons de borne d'arcade pour le boîtier de commande
+
+## Circuits électroniques "maison"
+
+Amplificateur sonore à base de circuit intégré LM386
+
+Flash d'alerte à LED clignotant
+
+

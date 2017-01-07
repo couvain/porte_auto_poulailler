@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#syntaxe: outgpio <numero_gpio> <valeur>
+# mettre une valeur en sortie d'un gpio
+
+# Vérifier que la valeur passée en entrée est bien 0 ou 1
+if [[ $2 = 0 ]] || [[ $2 = 1 ]]; then
+  # Faire un unexport du gpio
+  echo $1 > /sys/class/gpio/unexport
+
+  # Ecriture du numéro de GPIO dans le device "export"
+  echo $1 > /sys/class/gpio/export
+
+  # Ecriture du sens d'utilisation du gpio
+  echo out > /sys/class/gpio/gpio$1/direction
+
+  #Ecriture de la valeur 0 ou 1 dans le gpio
+  echo $2 > /sys/class/gpio/gpio$1/value
+else
+  echo ""
+  echo "Syntaxe:"
+  echo "    $0 <numero_gpio> <valeur>"
+  echo ""
+  echo "Erreur: Valeurs GPIO supportées 0 ou 1 (reçu: $2)"
+  echo ""
+fi

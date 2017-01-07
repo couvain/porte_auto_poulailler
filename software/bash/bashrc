@@ -1,0 +1,23 @@
+export LS_OPTIONS='--color=auto'
+alias ls='ls $LS_OPTIONS'
+alias ll='ls $LS_OPTIONS -l'
+alias l='ls $LS_OPTIONS -lA'
+
+
+#pico2wave -l fr-FR -w /tmp/test.wav "Ordinateur en marche"
+#play /tmp/test.wav
+#rm /tmp/test.wav
+#./prononce.sh "Ordinateur en marche"
+
+# Allumage de l'amplificateur audio
+./amplion
+
+# Jouer le son de chant du coq
+play -q ./coq1.wav
+
+# Prononcer l'heure en synthèse vocale
+./ditheure.sh
+
+# Extinction de l'amplificateur audio
+./amplioff
+
