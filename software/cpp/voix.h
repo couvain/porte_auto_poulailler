@@ -22,6 +22,8 @@ public:
 	void initialiser();
 	void prononcer(std::string p_phrase);
 	void set_agent_vocal(TAgentVocal p_agent_vocal);
+	
+	void joue_wav(std::string p_nom_fichier);
 };
 
 

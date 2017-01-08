@@ -77,9 +77,31 @@ void CVoix::prononcer(std::string p_phrase)
 
 		// 2° - On lit le fichier WAV créé et on le supprime		
 		
-		l_commande = "play \"/tmp/phrase.wav\" 2>/dev/null; rm -f /tmp/phrase.wav";
+		l_commande = "play -q \"/tmp/phrase.wav\"; rm -f /tmp/phrase.wav";
 		//LOG(INFO) << l_commande;
 		system(l_commande.c_str());
 	}
 	m_relais_alim_amplificateur->desactiver();
 }
+
+//*****************************************************************************
+//
+// Joue un fichier WAV avec la commande play
+//
+//-----------------------------------------------------------------------------
+void CVoix::joue_wav(std::string p_nom_fichier)
+{
+	std::string l_commande;
+	m_relais_alim_amplificateur->activer();
+	
+	// On lit le fichier WAV 
+	
+	l_commande = "play -q \"";
+	l_commande += p_nom_fichier;
+	l_commande += "\"";
+	//LOG(INFO) << l_commande;
+	system(l_commande.c_str());
+	
+	m_relais_alim_amplificateur->desactiver();
+}
+

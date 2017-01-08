@@ -102,17 +102,18 @@ int main ()
 	COutputToFile::Stream() = pFile;
 	CFileLog::ReportingLevel() = CFileLog::FromString("[DEBUG]");
 
-	LOG(INFO) << "-------------------------------------";
+	LOG(INFO) << "--------------------------------------";
 	LOG(INFO) << "Porte automatique de poulailler v1.0";
-	LOG(INFO) << "-------------------------------------";
-	std::cout << "-------------------------------------\n";
+	LOG(INFO) << "--------------------------------------";
+	std::cout << "--------------------------------------\n";
 	std::cout << "Porte automatique de poulailler v1.0\n";
-	std::cout << "-------------------------------------" << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
 	
 	construction_objets();
 	g_voix->set_agent_vocal(CVoix::AGENT_VOCAL_PICO);
-	g_voix->prononcer(CTemps::heure_prononcable().c_str());
+	g_voix->joue_wav("chicken.wav");
 	g_voix->prononcer("Démarrage du système");
+	
 	g_periode_verification_transitions = G_PERIODE_NORMALE;
 	
 	initialiser_hardware();
