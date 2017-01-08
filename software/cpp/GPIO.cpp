@@ -65,14 +65,14 @@ int CGPIO::export_gpio()
 		{
 			// ENOENT -> No such file or directory
 			// Pas de "device" I²C sur la machine 
-			LOG(ERROR) << "Aucun device export GPIO \"" << m_chemin_export << "\" détecté sur cette machine";
+			LOG(ERROR) << "[CGPIO::export_gpio] 00 - Aucun device export GPIO \"" << m_chemin_export << "\" détecté sur cette machine";
 		}
 		else
 		{
 			LOG(ERROR) << "errno=" << errno << std::endl;
-			LOG(ERROR) << "[CGPIO::export_gpio] 00 - Ouverture du device \"export\" de GPIO impossible.";
+			LOG(ERROR) << "[CGPIO::export_gpio] 01 - Ouverture du device \"export\" de GPIO impossible.";
 			
-			perror("[CGPIO::export_gpio] 00 - Ouverture du device \"export\" de GPIO impossible.\n Cause");
+			perror("[CGPIO::export_gpio] 01 - Ouverture du device \"export\" de GPIO impossible.\n Cause");
 		}
 		exit(1);
 	}
@@ -86,7 +86,7 @@ int CGPIO::export_gpio()
 	{
 		// On tente un unexport avant de réécrire le numéro de GPIO dans le device "export"
 		// (évite un blocage)
-		LOG(WARNING) << "GPIO déjà exporté. Unexport préliminaire pour GPIO " << this->m_numero_gpio;
+		LOG(WARNING) << "[CGPIO::export_gpio] 02 - GPIO déjà exporté. Unexport préliminaire pour GPIO " << this->m_numero_gpio;
 		this->unexport_gpio();
 		l_statut = write(this->m_exportfd, l_num_gpio.c_str(), l_num_gpio.length());
 
@@ -94,8 +94,8 @@ int CGPIO::export_gpio()
 		{
 			// Cas possible: Le GPIO est probablement déjà exporté (Device or resource busy)
 			LOG(ERROR) << "write() status = " << l_statut;
-			LOG(ERROR) << "[CGPIO::export_gpio] 01 - Ecriture dans le device \"export\" de GPIO impossible.";
-			perror("[CGPIO::export_gpio] 01 - Ecriture dans le device \"export\" de GPIO impossible.\n Cause");
+			LOG(ERROR) << "[CGPIO::export_gpio] 03 - Ecriture dans le device \"export\" de GPIO impossible.";
+			perror("[CGPIO::export_gpio] 03 - Ecriture dans le device \"export\" de GPIO impossible.\n Cause");
 
 			exit(1);
 		}
@@ -105,8 +105,8 @@ int CGPIO::export_gpio()
 	l_statut = close(this->m_exportfd);
 	if (l_statut < 0)
 	{
-		LOG(ERROR) << "[CGPIO::export_gpio] 02 - Fermeture du device \"export\" de GPIO impossible. Statut = " << l_statut;
-		perror("[CGPIO::export_gpio] 02 - Fermeture du device \"export\" de GPIO impossible.\n Cause");
+		LOG(ERROR) << "[CGPIO::export_gpio] 04 - Fermeture du device \"export\" de GPIO impossible. Statut = " << l_statut;
+		perror("[CGPIO::export_gpio] 04 - Fermeture du device \"export\" de GPIO impossible.\n Cause");
 		exit(1);
 	}
 
@@ -126,8 +126,8 @@ int CGPIO::unexport_gpio()
 	l_statut = open(m_chemin_unexport.c_str(),  O_WRONLY|O_SYNC);
 	if (l_statut < 0)
 	{
-		LOG(ERROR) << "[CGPIO::unexport_gpio] 03 - Ouverture du device \"unexport\" de GPIO impossible. Statut = " << l_statut;
-		perror("[CGPIO::unexport_gpio] 03 - Ouverture du device \"unexport\" de GPIO impossible.\n Cause");
+		LOG(ERROR) << "[CGPIO::unexport_gpio] 13 - Ouverture du device \"unexport\" de GPIO impossible. Statut = " << l_statut;
+		perror("[CGPIO::unexport_gpio] 13 - Ouverture du device \"unexport\" de GPIO impossible.\n Cause");
 		exit(1);
 	}
 	m_unexportfd = l_statut;
@@ -136,16 +136,16 @@ int CGPIO::unexport_gpio()
 	l_statut = write(this->m_unexportfd, l_num_gpio.c_str(), l_num_gpio.length());
 	if (l_statut < 0)
 	{
-		LOG(ERROR) << "[CGPIO::unexport_gpio] 04 - Ecriture dans le device \"unexport\" de GPIO impossible. Statut =" << l_statut;
-		perror("[CGPIO::unexport_gpio] 04 - Ecriture dans le device \"unexport\" de GPIO impossible.\n Cause");
+		LOG(ERROR) << "[CGPIO::unexport_gpio] 14 - Ecriture dans le device \"unexport\" de GPIO impossible. Statut =" << l_statut;
+		perror("[CGPIO::unexport_gpio] 14 - Ecriture dans le device \"unexport\" de GPIO impossible.\n Cause");
 		exit(1);
 	}
 
 	l_statut = close(this->m_unexportfd);
 	if (l_statut < 0)
 	{
-		LOG(ERROR) << "[CGPIO::unexport_gpio] 05 - Fermeture du device \"unexport\" de GPIO impossible. Statut =" << l_statut;
-		perror("[CGPIO::unexport_gpio] 05 - Fermeture du device \"unexport\" de GPIO impossible.\n Cause");
+		LOG(ERROR) << "[CGPIO::unexport_gpio] 15 - Fermeture du device \"unexport\" de GPIO impossible. Statut =" << l_statut;
+		perror("[CGPIO::unexport_gpio] 15 - Fermeture du device \"unexport\" de GPIO impossible.\n Cause");
 		exit(1);
 	}
 
@@ -291,7 +291,7 @@ bool CGPIO::get_value()
 	}
 	else
 	{
-		LOG(ERROR) << "[CGPIO::get_value] Erreur de lecture dans le GPIO " << m_numero_gpio;
+		LOG(ERROR) << "[CGPIO::get_value] 30 - Erreur de lecture dans le GPIO " << m_numero_gpio;
 	}
 	return l_resultat;
 }
@@ -310,8 +310,8 @@ int CGPIO::get_value(std::string& p_val)
 	l_statut = open(m_chemin_value.c_str(), O_RDONLY|O_SYNC);
 	if (l_statut < 0)
 	{
-		LOG(ERROR) << "[CGPIO::get_value] 13 - Ouverture du device \"value\" de GPIO impossible. Statut = " << l_statut;
-		perror("[CGPIO::get_value] 13 - Ouverture du device \"value\" de GPIO impossible.\n Cause");
+		LOG(ERROR) << "[CGPIO::get_value] 23 - Ouverture du device \"value\" de GPIO impossible. Statut = " << l_statut;
+		perror("[CGPIO::get_value] 23 - Ouverture du device \"value\" de GPIO impossible.\n Cause");
 		exit(1);
 	}
 	m_valuefd = l_statut;
@@ -320,8 +320,8 @@ int CGPIO::get_value(std::string& p_val)
 	l_statut = read(m_valuefd, &l_buffer, 1);
 	if (l_statut < 0)
 	{
-		LOG(ERROR) << "[CGPIO::get_value] 14 - Lecture dans le device \"value\" de GPIO impossible. Statut=" << l_statut;
-		perror("[CGPIO::get_value] 14 - Lecture dans le device \"value\" de GPIO impossible.\n Cause");
+		LOG(ERROR) << "[CGPIO::get_value] 24 - Lecture dans le device \"value\" de GPIO impossible. Statut=" << l_statut;
+		perror("[CGPIO::get_value] 24 - Lecture dans le device \"value\" de GPIO impossible.\n Cause");
 		exit(1);
 	}
 
@@ -331,8 +331,8 @@ int CGPIO::get_value(std::string& p_val)
 	if ((p_val.compare("1") != 0) && 
 		(p_val.compare("0") != 0) ) 
 	{
-		LOG(ERROR) << "[CGPIO::get_value] 15 - Valeur lue invalide. Devrait être \"1\" ou \"0\".";
-		fprintf(stderr, "[CGPIO::get_value] 15 - Valeur lue invalide. Devrait être \"1\" ou \"0\".\n");
+		LOG(ERROR) << "[CGPIO::get_value] 25 - Valeur lue invalide. Devrait être \"1\" ou \"0\".";
+		fprintf(stderr, "[CGPIO::get_value] 25 - Valeur lue invalide. Devrait être \"1\" ou \"0\".\n");
 		exit(1);
 	}
 
@@ -340,8 +340,8 @@ int CGPIO::get_value(std::string& p_val)
 	l_statut = close(m_valuefd);
 	if (l_statut < 0)
 	{
-		LOG(ERROR) << "[CGPIO::get_value] 16 - Fermeture du device \"value\" de GPIO impossible. Statut=" << l_statut;
-		perror("[CGPIO::get_value] 16 - Fermeture du device \"value\" de GPIO impossible.\n Cause");
+		LOG(ERROR) << "[CGPIO::get_value] 26 - Fermeture du device \"value\" de GPIO impossible. Statut=" << l_statut;
+		perror("[CGPIO::get_value] 26 - Fermeture du device \"value\" de GPIO impossible.\n Cause");
 		exit(1);
 	}
 
