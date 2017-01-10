@@ -18,9 +18,9 @@ Imprimé à 600 dpi, le circuit imprimé a des dimensions de 45 mm x 35 mm
 Pour plus de facilité d'installation dans le poulailler, toutes les connexions se font à l'aide de cosses de connexion "domino" qui se vissent pour bloquer les fils des autres modules reliés.
 
 ## La connexion audio au Raspberry Pi
-Attention pour la connexion des fils venant de la pris Jack
-La masse du Jack se connecte sur la masse de l'alimentation électrique (0V ou GND)
-Les voies droite et gauche se connectent sur les deux entrées qui seront mixées en une voie mono en sortie.
+Attention pour la connexion des fils venant de la prise Jack: 
+- La masse du Jack se connecte sur la masse de l'alimentation électrique (0V ou GND)
+- Les voies droite et gauche se connectent sur les deux entrées qui seront mixées en une voie mono en sortie.
 
 ## Alimentation
 Le circuit s'alimente en 12 V continu.
