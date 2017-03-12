@@ -21,7 +21,7 @@ moteur.o: moteur.cpp
 porte.o: porte.cpp
 	g++ $(CFLAGS) porte.cpp
 
-poulailler.o: poulailler.cpp
+poulailler.o: poulailler.cpp globales.h
 	g++ $(CFLAGS) poulailler.cpp
 
 relais.o: relais.cpp

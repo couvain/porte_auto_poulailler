@@ -85,7 +85,7 @@ bool teste_transition_26();
 bool teste_transition_27();
 bool teste_transition_28();
 
-void affiche_transitions();
+void affiche_compteurs();
 void arret_urgence();
 void reinitialisation_gpio();
 void demarrer_timeout(int p_duree_secondes);
@@ -290,14 +290,14 @@ void construction_automate()
 	g_automate->ajoute_etat("Porte ouverte"			, callback_etat_6);
 
 	g_automate->ajoute_etat("Porte pas fermée à temps"	, callback_etat_7);
-	g_automate->ajoute_etat("Porte fermante bloquée"	, callback_etat_8);
-	g_automate->ajoute_etat("Nouvelle fermeture"		, callback_etat_9);
+	g_automate->ajoute_etat("Porte fermante bloquée (ouvrante)"	, callback_etat_8);
+	g_automate->ajoute_etat("Nouvelle fermeture (fermante)"		, callback_etat_9);
 	g_automate->ajoute_etat("Porte totalement bloquée"	, callback_etat_10);
 	g_automate->ajoute_etat("Blocage en fermeture"		, callback_etat_11);
 
 	g_automate->ajoute_etat("Porte pas ouverte à temps"	, callback_etat_12);
-	g_automate->ajoute_etat("Porte ouvrante bloquée"	, callback_etat_13);
-	g_automate->ajoute_etat("Nouvelle ouverture"		, callback_etat_14);
+	g_automate->ajoute_etat("Porte ouvrante bloquée (fermante)"	, callback_etat_13);
+	g_automate->ajoute_etat("Nouvelle ouverture (ouvrante)"		, callback_etat_14);
 	g_automate->ajoute_etat("Blocage en fermeture"		, callback_etat_15);
 
 	g_automate->ajoute_etat("Alerte"			, callback_etat_16);
@@ -441,7 +441,7 @@ void boucle_principale()
 		g_automate->execute_trans(l_transition);
 		cls();
 		g_automate->affiche();
-		affiche_transitions();
+		affiche_compteurs();
 
 		CTemps::attendre(g_periode_verification_transitions); // pause de durée fluctuante
 
@@ -507,22 +507,10 @@ void beep()
 //
 //
 //----------------------------------------------------------------------
-void affiche_transitions()
+void affiche_compteurs()
 {
-	int i;
-
-	LOG(INFO) << "Valeurs des Transitions" << std::endl;
-	LOG(INFO) << "Transition";
-	for ( i = 0;i < CAutomate::NBMAX_TRANS; i++ )
-	{
-		LOG(INFO) << std::setw(3) << i;
-	}
-
-	LOG(INFO) << "Valeur    ";
-	for ( i = 0; i < CAutomate::NBMAX_TRANS; i++ )
-	{
-		LOG(INFO) << std::setw(3) << teste_transition(i);
-	}
+	std::cout << "Tentatives d'ouverture  -> " << g_compteur_ouvertures << std::endl;
+	std::cout << "Tentatives de fermeture -> " << g_compteur_fermetures << std::endl;
 }
 
 //**********************************************************************
@@ -686,7 +674,7 @@ bool teste_transition_3() // OK
 
 	l_resultat = l_bouton_ouvrir ||	( l_matin && l_seuil_luminosite_atteint );
 
-	// On affiche si la transition est activée
+	// On affiche si la transition est activée (pour debug)
 	if (l_resultat)
 	{
 		std::cout << "Transition 3 activée" ;
@@ -694,11 +682,11 @@ bool teste_transition_3() // OK
 		std::cout << "\n   -> seuil lux     = " << l_seuil_luminosite_atteint;
 		if (l_seuil_luminosite_atteint)
 		{
- 			std::cout << "    ( lux = " << l_luminosite << " > seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )"; 
+ 			std::cout << "    ( lux = " << l_luminosite << " > seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )";
 		}
 		else
 		{
- 			std::cout << "    ( lux = " << l_luminosite << " < seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )"; 
+ 			std::cout << "    ( lux = " << l_luminosite << " < seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )";
 		}
 		std::cout << "\n   -> bouton ouvrir = " << l_bouton_ouvrir << std::endl;
 	}
@@ -1032,7 +1020,7 @@ void callback_etat_0()
 	}
 
 	g_periode_verification_transitions = G_PERIODE_NORMALE;
-	g_voix->prononcer("Démarrage de l'automate");
+	//g_voix->prononcer("Démarrage de l'automate");
 
 
 	// Eteindre le flash d'alerte
