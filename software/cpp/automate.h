@@ -8,8 +8,8 @@
 class CAutomate
 {
 public:
-	static const int NBMAX_ETATS = 18;
-	static const int NBMAX_TRANS = 28;
+	static const int NBMAX_ETATS = 19;
+	static const int NBMAX_TRANS = 29;
 private:
 	static const int ETAT_AUTOMATE_ETEINT = -1;
 	static const int ETAT_INDEFINI        = -2;
@@ -35,7 +35,8 @@ public:
 	void demarre();
 	void affiche();
 	void ajoute_etat(std::string p_nom_etat, PtrFnctVoidSansParam p_fonction_callback);
-	void ajoute_trans(int p_etat_debut,int p_etat_fin);
+	int ajoute_trans(int p_etat_debut,int p_etat_fin);
+	void ajoute_trans_existante(int p_etat_debut,int p_etat_fin, int p_numero_trans);
 	void execute_trans(int p_numero_trans);
 	void set_etat_final(int p_numero_etat_final);
 	bool termine();

@@ -11,7 +11,7 @@ private:
 	// inverser le sens de rotation du moteur
 	CRelais * m_relais_inverseur_A;
 	CRelais * m_relais_inverseur_B;
-	
+
 	// on utilise un relais de "commande" permettant de lancer la 
 	// rotation du moteur
 	CRelais * m_relais_commande;
@@ -24,7 +24,8 @@ public:
 	void cabler_en_marche_arriere();
 	void demarrer();
 	void stopper();
-	
+	void arret_urgence();
+
 };
 
 #endif

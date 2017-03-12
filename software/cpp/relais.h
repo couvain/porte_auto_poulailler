@@ -19,6 +19,7 @@ public:
 	void activer();
 	void desactiver();	
 	bool get_etat();
+	void arret_urgence();
 };
 
 #endif

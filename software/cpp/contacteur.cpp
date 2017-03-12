@@ -41,3 +41,18 @@ bool CContacteur::get_etat()
 
 	return m_etat;
 }
+
+//**********************************************************************
+//
+//
+//
+//----------------------------------------------------------------------
+void CContacteur::arret_urgence()
+{
+	// Mettre le GPIO en mode IN (ne sert à rien si le contacteur est bien initialisé, on le fait quand même)
+	m_gpio->set_direction_input();
+
+	// Unexport du GPIO -> provoque une erreur
+	//m_gpio->unexport_gpio();
+
+}

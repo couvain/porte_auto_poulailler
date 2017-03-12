@@ -64,23 +64,23 @@ int CGPIO::export_gpio()
 		if (errno == ENOENT)
 		{
 			// ENOENT -> No such file or directory
-			// Pas de "device" I²C sur la machine 
+			// Pas de "device" GPIO sur la machine
 			LOG(ERROR) << "[CGPIO::export_gpio] 00 - Aucun device export GPIO \"" << m_chemin_export << "\" détecté sur cette machine";
 		}
 		else
 		{
 			LOG(ERROR) << "errno=" << errno << std::endl;
 			LOG(ERROR) << "[CGPIO::export_gpio] 01 - Ouverture du device \"export\" de GPIO impossible.";
-			
+
 			perror("[CGPIO::export_gpio] 01 - Ouverture du device \"export\" de GPIO impossible.\n Cause");
 		}
 		exit(1);
 	}
 	m_exportfd = l_statut;
 
-	// Ecriture du numéro de GPIO dans le device "export" 
+	// Ecriture du numéro de GPIO dans le device "export"
 	l_num_gpio = std::to_string(m_numero_gpio);
-	
+
 	l_statut = write(m_exportfd, l_num_gpio.c_str(), l_num_gpio.length());
 	if (l_statut < 0)
 	{

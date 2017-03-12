@@ -7,7 +7,7 @@
 
 //*****************************************************************************
 //
-// 
+//
 //
 //-----------------------------------------------------------------------------
 CVoix::CVoix(int p_gpio)
@@ -17,7 +17,7 @@ CVoix::CVoix(int p_gpio)
 
 //*****************************************************************************
 //
-// 
+//
 //
 //-----------------------------------------------------------------------------
 CVoix::~CVoix()
@@ -37,7 +37,7 @@ void CVoix::initialiser()
 
 //*****************************************************************************
 //
-// 
+//
 //
 //-----------------------------------------------------------------------------
 void CVoix::set_agent_vocal(TAgentVocal p_agent_vocal)
@@ -47,20 +47,20 @@ void CVoix::set_agent_vocal(TAgentVocal p_agent_vocal)
 
 //*****************************************************************************
 //
-// 
+//
 //
 //-----------------------------------------------------------------------------
 void CVoix::prononcer(std::string p_phrase)
 {
 	std::string l_commande;
-	
+
 	m_relais_alim_amplificateur->activer();
 	if (m_agent_vocal == CVoix::AGENT_VOCAL_ESPEAK)
-	{ 
+	{
 		l_commande = "espeak -v mb/mb-fr4 \"";
 		l_commande += p_phrase;
 		l_commande+="\" 2>/dev/null";
-	
+
 		LOG(INFO) << "Prononcé (espeak): \"" << p_phrase << "\"";
 		system(l_commande.c_str());
 	}
@@ -72,11 +72,11 @@ void CVoix::prononcer(std::string p_phrase)
 		l_commande+="\" 2>/dev/null";
 		//LOG(INFO) << l_commande;
 		system(l_commande.c_str());
-	
+
 		LOG(INFO) << "Prononcé (pico): \"" << p_phrase << "\"";
 
-		// 2° - On lit le fichier WAV créé et on le supprime		
-		
+		// 2° - On lit le fichier WAV créé et on le supprime
+
 		l_commande = "play -q \"/tmp/phrase.wav\"; rm -f /tmp/phrase.wav";
 		//LOG(INFO) << l_commande;
 		system(l_commande.c_str());
@@ -93,15 +93,25 @@ void CVoix::joue_wav(std::string p_nom_fichier)
 {
 	std::string l_commande;
 	m_relais_alim_amplificateur->activer();
-	
-	// On lit le fichier WAV 
-	
+
+	// On lit le fichier WAV
+
 	l_commande = "play -q \"";
 	l_commande += p_nom_fichier;
 	l_commande += "\"";
 	//LOG(INFO) << l_commande;
 	system(l_commande.c_str());
-	
+
 	m_relais_alim_amplificateur->desactiver();
+}
+
+//**********************************************************************
+//
+//
+//
+//----------------------------------------------------------------------
+void CVoix::arret_urgence()
+{
+	m_relais_alim_amplificateur->arret_urgence();
 }
 

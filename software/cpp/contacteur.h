@@ -24,6 +24,7 @@ public:
 	CContacteur(int p_numero_gpio);	
 	~CContacteur();	
 	bool get_etat();
+	void arret_urgence();
 };
 
 #endif

@@ -15,15 +15,16 @@ public:
 private:
 	CRelais * m_relais_alim_amplificateur;
 	TAgentVocal m_agent_vocal;
-	
+
 public:
 	CVoix(int p_gpio);
 	~CVoix();
 	void initialiser();
 	void prononcer(std::string p_phrase);
 	void set_agent_vocal(TAgentVocal p_agent_vocal);
-	
+
 	void joue_wav(std::string p_nom_fichier);
+	void arret_urgence();
 };
 
 

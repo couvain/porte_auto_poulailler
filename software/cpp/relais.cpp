@@ -12,7 +12,6 @@ CRelais::CRelais(int p_num_gpio)
 	if (m_gpio != 0)
 	{
 		initialiser();
-		m_etat = CRelais::ETAT_DESACTIVE;
 	}
 }
 
@@ -23,7 +22,6 @@ CRelais::CRelais(int p_num_gpio)
 //----------------------------------------------------------------------
 CRelais::~CRelais()
 {
-	m_gpio->set_value(false);
 	delete(m_gpio);
 }
 
@@ -35,10 +33,12 @@ CRelais::~CRelais()
 void CRelais::initialiser()
 {
 	m_gpio->export_gpio();
+
 	// Un relais est un actionneur donc GPIO en mode OUT
 	m_gpio->set_direction_output();
-	// Désactiver le GPIO, si possible
-	m_gpio->set_value(true);
+
+	// Désactiver le relais
+	desactiver();
 }
 
 //**********************************************************************
@@ -48,7 +48,7 @@ void CRelais::initialiser()
 //----------------------------------------------------------------------
 void CRelais::activer()
 {
-	m_gpio->set_value(false);
+	m_gpio->set_value(true);
 	m_etat = CRelais::ETAT_ACTIVE;
 }
 
@@ -57,9 +57,9 @@ void CRelais::activer()
 //
 //
 //----------------------------------------------------------------------
-void CRelais::desactiver()	
+void CRelais::desactiver()
 {
-	m_gpio->set_value(true);
+	m_gpio->set_value(false);
 	m_etat = CRelais::ETAT_DESACTIVE;
 
 }
@@ -72,4 +72,15 @@ void CRelais::desactiver()
 bool CRelais::get_etat()
 {
 	return m_etat;
+}
+
+//**********************************************************************
+//
+// Arrêt d'urgence, on met le GPIO en mode INPUT
+//
+//----------------------------------------------------------------------
+void CRelais::arret_urgence()
+{
+	desactiver();
+	m_gpio->set_direction_input();
 }

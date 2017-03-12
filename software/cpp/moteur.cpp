@@ -13,7 +13,7 @@
 CMoteur::CMoteur(int p_gpio_inv_A, int p_gpio_inv_B, int p_gpio_comm)
 {
 	m_relais_inverseur_A = new CRelais(p_gpio_inv_A);
-	m_relais_inverseur_B = new CRelais(p_gpio_inv_B);	
+	m_relais_inverseur_B = new CRelais(p_gpio_inv_B);
 	m_relais_commande = new CRelais(p_gpio_comm);
 }
 
@@ -51,10 +51,10 @@ void CMoteur::cabler_en_marche_avant()
 	// On arrête le moteur pour faire un câblage inverseur
 	m_relais_commande->desactiver();
 
-	CTemps::attendre(500); // Pause d'une demi seconde
+	CTemps::attendre(500); // Pause d'une demi-seconde
 
 	m_relais_inverseur_A->activer();
-	m_relais_inverseur_B->activer();
+	m_relais_inverseur_B->desactiver();
 }
 
 //**********************************************************************
@@ -67,10 +67,10 @@ void CMoteur::cabler_en_marche_arriere()
 	// On arrête le moteur pour faire un câblage inverseur
 	m_relais_commande->desactiver();
 
-	CTemps::attendre(500); // Pause d'une demi seconde
+	CTemps::attendre(500); // Pause d'une demi-seconde
 
 	m_relais_inverseur_A->desactiver();
-	m_relais_inverseur_B->desactiver();
+	m_relais_inverseur_B->activer();
 }
 //**********************************************************************
 //
@@ -99,7 +99,29 @@ void CMoteur::demarrer()
 //----------------------------------------------------------------------
 void CMoteur::stopper()
 {
-	LOG(INFO) << "Arrêt du moteur";	
+	LOG(INFO) << "Arrêt du moteur";
 	// On arrête le moteur
 	m_relais_commande->desactiver();
+
+	CTemps::attendre(500); // Pause d'une demi-seconde
+
+	m_relais_inverseur_A->desactiver();
+	m_relais_inverseur_B->desactiver();
+}
+
+//**********************************************************************
+//
+//
+//
+//----------------------------------------------------------------------
+void CMoteur::arret_urgence()
+{
+	LOG(INFO) << "Arrêt d'urgence du moteur";
+	// On arrête le moteur
+	//m_relais_commande->desactiver();
+
+	m_relais_inverseur_A->arret_urgence();
+	m_relais_inverseur_B->arret_urgence();
+	m_relais_commande->arret_urgence();
+
 }

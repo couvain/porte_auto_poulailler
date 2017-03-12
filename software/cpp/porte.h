@@ -14,6 +14,7 @@ public:
 	void ouvrir();
 	void fermer();
 	void stopper();
+	void arret_urgence();
 };
 
 #endif

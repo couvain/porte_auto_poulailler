@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <signal.h>
 
 #include "automate.h"
 #include "contacteur.h"
@@ -50,6 +51,7 @@ void callback_etat_14();
 void callback_etat_15();
 void callback_etat_16();
 void callback_etat_17();
+void callback_etat_18();
 
 bool teste_transition(int p_num_transition);
 
@@ -81,13 +83,18 @@ bool teste_transition_24();
 bool teste_transition_25();
 bool teste_transition_26();
 bool teste_transition_27();
+bool teste_transition_28();
 
 void affiche_transitions();
-
+void arret_urgence();
+void reinitialisation_gpio();
 void demarrer_timeout(int p_duree_secondes);
 bool is_timeout_ecoule();
 void callback_timeout(int p_param);
 void stop_timeout();
+void gestion_signal(int p_signal);
+void cls();
+void beep();
 
 //**********************************************************************
 //
@@ -96,6 +103,18 @@ void stop_timeout();
 //----------------------------------------------------------------------
 int main ()
 {
+	//---------------------------
+	// Interception du CTRL-C
+	//---------------------------
+	struct sigaction sigIntHandler;
+	sigIntHandler.sa_handler = gestion_signal;
+	sigemptyset(&sigIntHandler.sa_mask);
+	sigIntHandler.sa_flags = 0;
+	// SIGINT = CTRL-C
+	sigaction(SIGINT, &sigIntHandler, NULL);
+
+	// ---------------------------
+
 	std::cout << std::endl;
 
 	FILE* pFile = fopen("poulailler.log", "a");
@@ -108,26 +127,37 @@ int main ()
 	std::cout << "--------------------------------------\n";
 	std::cout << "Porte automatique de poulailler v1.0\n";
 	std::cout << "--------------------------------------" << std::endl;
-	
+
 	construction_objets();
 	g_voix->set_agent_vocal(CVoix::AGENT_VOCAL_PICO);
 	g_voix->joue_wav("chicken.wav");
 	g_voix->prononcer("Démarrage du système");
-	
 	g_periode_verification_transitions = G_PERIODE_NORMALE;
-	
+
 	initialiser_hardware();
 	construction_automate();
 	g_automate->affiche();
-	
+
 	// Tout se passe là
 	boucle_principale();
-	
+
 	liberer_hardware();
-	
+
 	destruction_objets();
-	
+
 	return 0;
+}
+
+//**********************************************************************
+//
+// Gestion du CTRL-C
+//
+//----------------------------------------------------------------------
+void gestion_signal(int p_signal)
+{
+	std::cout << "\nCTRL-C intercepté." << std::endl;
+	arret_urgence();
+	exit(1);
 }
 
 //**********************************************************************
@@ -139,14 +169,14 @@ void initialiser_hardware()
 {
 	// Relier le capteur I2C au bus I2C
 	g_capteur_luminosite->setBusI2C(g_bus_i2c);
-	
+
 	// Ouvrir le bus I2C
 	g_bus_i2c->ouvre_bus();
-	
+
 	if (!g_bus_i2c->is_bus_ouvert())
 	{
-			// Arrêt prématuré du programme
-			exit(1);
+		// Arrêt prématuré du programme
+		exit(1);
 	}
 	else
 	{
@@ -156,7 +186,7 @@ void initialiser_hardware()
 			g_capteur_luminosite->tsl2591_initialize();
 		}
 	}
-	
+
 	// GPIO 4  - relais inverseur A du moteur de la porte
 	// GPIO 17 - relais inverseur B du moteur de la porte
 	// GPIO 18 - relais de commande du moteur de la porte
@@ -170,13 +200,41 @@ void initialiser_hardware()
 
 	// GPIO 22 - relais inutilisé
 	g_relais_inutilise_1->initialiser();
-	
+
 	// GPIO 23 - relais inutilisé
 	g_relais_inutilise_2->initialiser();
-	
+
 	// GPIO 24 - relais inutilisé
 	g_relais_inutilise_3->initialiser();
+}
 
+//**********************************************************************
+//
+// Réinitialisation des GPIO
+//
+//----------------------------------------------------------------------
+void reinitialisation_gpio()
+{
+	// Mettre les GPIO en mode IN
+	g_bouton_ouverture->arret_urgence();
+	g_bouton_fermeture->arret_urgence();
+	g_bouton_raz->arret_urgence();
+	g_bouton_arret_urgence->arret_urgence();
+
+	g_contacteur_porte_ouverte->arret_urgence();
+	g_contacteur_porte_fermee->arret_urgence();
+
+	g_porte->arret_urgence();
+
+	g_voix->arret_urgence();
+
+	g_relais_alerte->arret_urgence();
+
+	g_relais_inutilise_1->arret_urgence();
+	g_relais_inutilise_2->arret_urgence();
+	g_relais_inutilise_3->arret_urgence();
+
+	// Unexport des GPIO (ne marche pas?)
 }
 
 //**********************************************************************
@@ -187,6 +245,27 @@ void initialiser_hardware()
 void liberer_hardware()
 {
 	g_bus_i2c->ferme_bus();
+
+ 	reinitialisation_gpio();
+}
+
+//**********************************************************************
+//
+// Réinitialisation du Raspberry Pi suite à un arrêt d'urgence
+//
+//----------------------------------------------------------------------
+void arret_urgence()
+{
+	beep();
+
+	//  Réinitialisation des GPIO et du bus I2C
+	liberer_hardware();
+
+	// Libérer la mémoire
+	destruction_objets();
+
+	// Arrêter l'application en renvoyant une valeur spécifique indiquant arrêt d'urgence au script appelant
+	exit(1);
 }
 
 //**********************************************************************
@@ -196,55 +275,58 @@ void liberer_hardware()
 //----------------------------------------------------------------------
 void construction_automate()
 {
+	int l_no_transition_arret;
+	int i;
 	// Construction de l'automate
 
 	// Etape 1 - les états
 
-	g_automate->ajoute_etat("Réinitialisation"			, callback_etat_0);
-	g_automate->ajoute_etat("Porte fermante"			, callback_etat_1);
+	g_automate->ajoute_etat("Réinitialisation"		, callback_etat_0);
+	g_automate->ajoute_etat("Porte fermante"		, callback_etat_1);
 	g_automate->ajoute_etat("Porte fermée à temps"		, callback_etat_2);
-	g_automate->ajoute_etat("Porte fermée"				, callback_etat_3);
-	g_automate->ajoute_etat("Porte ouvrante"			, callback_etat_4);	
+	g_automate->ajoute_etat("Porte fermée"			, callback_etat_3);
+	g_automate->ajoute_etat("Porte ouvrante"		, callback_etat_4);
 	g_automate->ajoute_etat("Porte ouverte à temps"		, callback_etat_5);
-	g_automate->ajoute_etat("Porte ouverte"				, callback_etat_6);
-	
+	g_automate->ajoute_etat("Porte ouverte"			, callback_etat_6);
+
 	g_automate->ajoute_etat("Porte pas fermée à temps"	, callback_etat_7);
 	g_automate->ajoute_etat("Porte fermante bloquée"	, callback_etat_8);
 	g_automate->ajoute_etat("Nouvelle fermeture"		, callback_etat_9);
 	g_automate->ajoute_etat("Porte totalement bloquée"	, callback_etat_10);
 	g_automate->ajoute_etat("Blocage en fermeture"		, callback_etat_11);
-	
-	g_automate->ajoute_etat("Porte pas ouverte à temps"	, callback_etat_12);	
+
+	g_automate->ajoute_etat("Porte pas ouverte à temps"	, callback_etat_12);
 	g_automate->ajoute_etat("Porte ouvrante bloquée"	, callback_etat_13);
 	g_automate->ajoute_etat("Nouvelle ouverture"		, callback_etat_14);
 	g_automate->ajoute_etat("Blocage en fermeture"		, callback_etat_15);
 
-	g_automate->ajoute_etat("Alerte"					, callback_etat_16);
-	
+	g_automate->ajoute_etat("Alerte"			, callback_etat_16);
+
 	// Pour le cas où la porte est descendue par gravité, par erreur
-	g_automate->ajoute_etat("Porte descendue par erreur", callback_etat_17);
-	
-	// Etat pour réglage de l'heure (et de la date?)
+	g_automate->ajoute_etat("Porte descendue par erreur"	, callback_etat_17);
+
+	// Arrêt du programme (et du Raspberry Pi)
+	g_automate->ajoute_etat("Arrêt du système"		, callback_etat_18);
 
 
 
 	// Etape 2 - les transitions
 
-	g_automate->ajoute_trans(0,1);	// transition 0
+	g_automate->ajoute_trans(0,1);		// Transition 0
 
-	g_automate->ajoute_trans(1,2);	// transition 1
-	g_automate->ajoute_trans(2,3);	// transition 2
-	g_automate->ajoute_trans(3,4);	// transition 3
-	g_automate->ajoute_trans(4,5);	// transition 4
-	g_automate->ajoute_trans(5,6);	// transition 5
-	g_automate->ajoute_trans(6,1);	// transition 6
+	g_automate->ajoute_trans(1,2);		// Transition 1
+	g_automate->ajoute_trans(2,3);		// Transition 2
+	g_automate->ajoute_trans(3,4);		// Transition 3
+	g_automate->ajoute_trans(4,5);		// Transition 4
+	g_automate->ajoute_trans(5,6);		// Transition 5
+	g_automate->ajoute_trans(6,1);		// Transition 6
 
-	g_automate->ajoute_trans(1,7);	// Transition 7
-	g_automate->ajoute_trans(9,7);	// Transition 8
-	g_automate->ajoute_trans(8,9);	// Transition 9
-	g_automate->ajoute_trans(9,2);	// Transition 10
-	g_automate->ajoute_trans(9,11);	// Transition 11
-	g_automate->ajoute_trans(8,10);	// Transition 12
+	g_automate->ajoute_trans(1,7);		// Transition 7
+	g_automate->ajoute_trans(9,7);		// Transition 8
+	g_automate->ajoute_trans(8,9);		// Transition 9
+	g_automate->ajoute_trans(9,2);		// Transition 10
+	g_automate->ajoute_trans(9,11);		// Transition 11
+	g_automate->ajoute_trans(8,10);		// Transition 12
 	g_automate->ajoute_trans(10,16);	// Transition 13
 	g_automate->ajoute_trans(11,16);	// Transition 14
 	g_automate->ajoute_trans(4,12);		// Transition 15
@@ -261,7 +343,16 @@ void construction_automate()
 
 	g_automate->ajoute_trans(6,17);		// Transition 26
 	g_automate->ajoute_trans(17,4);		// Transition 27
-	
+
+	// Création de la transition d'arrêt (d'urgence ?) de l'automate
+	l_no_transition_arret =
+	g_automate->ajoute_trans(0,18);		// Transition 28
+
+	for (i=1;i<CAutomate::NBMAX_ETATS ;i++)
+	{
+		// On utilise la même transition pour tous les états de l'automate
+		g_automate->ajoute_trans_existante(i,18,l_no_transition_arret);
+	}
 	// Pas d'état final (à revoir?)
 	//g_automate->set_etat_final(3);
 }
@@ -278,6 +369,7 @@ void construction_objets()
 	g_bouton_ouverture 	= new CContacteur(G_GPIO_BOUTON_OUVERTURE_PORTE);
 	g_bouton_fermeture 	= new CContacteur(G_GPIO_BOUTON_FERMETURE_PORTE);
 	g_bouton_raz 		= new CContacteur(G_GPIO_BOUTON_RAZ);
+	g_bouton_arret_urgence	= new CContacteur(G_GPIO_BOUTON_ARRET_URGENCE);
 
 	g_contacteur_porte_ouverte 	= new CContacteur(G_GPIO_CONTACTEUR_PORTE_OUVERTE);
 	g_contacteur_porte_fermee 	= new CContacteur(G_GPIO_CONTACTEUR_PORTE_FERMEE);
@@ -288,7 +380,7 @@ void construction_objets()
 
 	g_capteur_luminosite = new CTSL2591();
 	g_bus_i2c = new CBusI2C();
-	
+
 	g_voix = new CVoix(G_GPIO_RELAIS_ALIM_AMPLI);
 
 	g_relais_alerte      = new CRelais(G_GPIO_RELAIS_ALERTE);
@@ -297,7 +389,6 @@ void construction_objets()
 	g_relais_inutilise_1 = new CRelais(G_GPIO_RELAIS_INUTILISE_1);
 	g_relais_inutilise_2 = new CRelais(G_GPIO_RELAIS_INUTILISE_2);
 	g_relais_inutilise_3 = new CRelais(G_GPIO_RELAIS_INUTILISE_3);
-
 }
 
 //**********************************************************************
@@ -307,11 +398,13 @@ void construction_objets()
 //----------------------------------------------------------------------
 void destruction_objets()
 {
+	// Destruction mémoire
 	delete(g_automate);
 
 	delete(g_bouton_ouverture);
 	delete(g_bouton_fermeture);
 	delete(g_bouton_raz);
+	delete(g_bouton_arret_urgence);
 
 	delete(g_contacteur_porte_ouverte);
 	delete(g_contacteur_porte_fermee);
@@ -346,6 +439,7 @@ void boucle_principale()
 		l_transition = lit_numero_transition();
 
 		g_automate->execute_trans(l_transition);
+		cls();
 		g_automate->affiche();
 		affiche_transitions();
 
@@ -367,9 +461,10 @@ int lit_numero_transition()
 	int i;
 	int l_transition = CAutomate::TRANSITION_INDEFINIE;
 	int l_nombre_transitions_definies;
-	
+
 	l_nombre_transitions_definies = g_automate->get_nb_transitions_definies_pour_etat_actuel();
-	
+	//std::cout << "Nombre de transitions disponibles: " << l_nombre_transitions_definies << std::endl;
+
 	// On ne teste que les transitions partant de l'état actuel
 	for (i = 1 ; i <= l_nombre_transitions_definies ; i++)
 	{
@@ -379,10 +474,32 @@ int lit_numero_transition()
 			// On a trouvé une transition activée
 			// Transition trouvée
 			LOG(INFO) << "Transition trouvée: " << l_transition;
+			std::cout << "Transition trouvée: " << l_transition << std::endl;
 			return l_transition;
 		}
 	}
+
 	return CAutomate::TRANSITION_INDEFINIE;
+}
+
+//**********************************************************************
+//
+// Effacer l'ecran
+//
+//----------------------------------------------------------------------
+void cls()
+{
+	std::cout << "\033[H\033[2J";
+}
+
+//**********************************************************************
+//
+// Effacer l'ecran
+//
+//----------------------------------------------------------------------
+void beep()
+{
+	g_voix->joue_wav("beep.wav");
 }
 
 //**********************************************************************
@@ -417,6 +534,7 @@ void affiche_transitions()
 void demarrer_timeout(int p_duree_secondes)
 {
 	LOG(INFO) << "Timeout défini sur " << p_duree_secondes << " secondes";
+	std::cout << "Timeout défini sur " << p_duree_secondes << " secondes" << std::endl;
 	CTemps::initialise_timeout(p_duree_secondes, callback_timeout);
 	g_etat_du_timeout = G_TIMEOUT_NON_ECOULE;
 }
@@ -429,6 +547,7 @@ void demarrer_timeout(int p_duree_secondes)
 void callback_timeout(int p_param)
 {
 	LOG(INFO) << "Timeout arrivé à échéance";
+	std::cout << "Timeout arrivé à échéance" << std::endl;
 	g_etat_du_timeout = G_TIMEOUT_ECOULE;
 	CTemps::efface_timeout();
 }
@@ -458,6 +577,8 @@ void stop_timeout()
 	if (g_etat_du_timeout == G_TIMEOUT_NON_ECOULE)
 	{
 		LOG(INFO) << "Timeout stoppé";
+		std::cout << "Timeout stoppé" << std::endl;
+
 		CTemps::efface_timeout();
 		g_etat_du_timeout = G_TIMEOUT_NON_DEFINI;
 	}
@@ -500,6 +621,7 @@ bool teste_transition(int p_num_transition)
 		case 25:	return teste_transition_25();
 		case 26:	return teste_transition_26();
 		case 27:	return teste_transition_27();
+		case 28:	return teste_transition_28();
 		default:	return false;
 	}
 	return false;
@@ -522,10 +644,13 @@ bool teste_transition_0() // OK
 // "Contact fermé OK ET pas timeout"
 //
 //----------------------------------------------------------------------
-bool teste_transition_1() 
+bool teste_transition_1()
 {
+	bool l_timeout;
+	l_timeout = is_timeout_ecoule();
+
 	return (g_contacteur_porte_fermee->get_etat()) &&
-			!(is_timeout_ecoule());
+			!(l_timeout);
 }
 
 //**********************************************************************
@@ -547,9 +672,37 @@ bool teste_transition_2() // OK
 //----------------------------------------------------------------------
 bool teste_transition_3() // OK
 {
-	return g_bouton_ouverture->get_etat() ||
-		( CTemps::c_est_le_matin() &&
-		g_capteur_luminosite->litLux(TSL2591_INTEGRATION_TIME_500MS,TSL2591_GAIN_LOW) > G_SEUIL_LUMINOSITE_MATIN );
+	bool l_seuil_luminosite_atteint;
+	uint32_t l_luminosite;
+	bool l_matin;
+	bool l_bouton_ouvrir;
+	bool l_resultat;
+
+
+	l_luminosite = g_capteur_luminosite->litLux(TSL2591_INTEGRATION_TIME_500MS,TSL2591_GAIN_LOW);
+	l_seuil_luminosite_atteint = (l_luminosite > G_SEUIL_LUMINOSITE_MATIN);
+	l_matin = CTemps::c_est_le_matin();
+	l_bouton_ouvrir = g_bouton_ouverture->get_etat();
+
+	l_resultat = l_bouton_ouvrir ||	( l_matin && l_seuil_luminosite_atteint );
+
+	// On affiche si la transition est activée
+	if (l_resultat)
+	{
+		std::cout << "Transition 3 activée" ;
+		std::cout << "\n   -> matin         = " << l_matin;
+		std::cout << "\n   -> seuil lux     = " << l_seuil_luminosite_atteint;
+		if (l_seuil_luminosite_atteint)
+		{
+ 			std::cout << "    ( lux = " << l_luminosite << " > seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )"; 
+		}
+		else
+		{
+ 			std::cout << "    ( lux = " << l_luminosite << " < seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )"; 
+		}
+		std::cout << "\n   -> bouton ouvrir = " << l_bouton_ouvrir << std::endl;
+	}
+	return l_resultat;
 }
 
 //**********************************************************************
@@ -560,7 +713,7 @@ bool teste_transition_3() // OK
 //----------------------------------------------------------------------
 bool teste_transition_4()
 {
-	return g_contacteur_porte_ouverte->get_etat() && 
+	return g_contacteur_porte_ouverte->get_etat() &&
 	!(is_timeout_ecoule());
 }
 
@@ -594,13 +747,13 @@ bool teste_transition_6() // OK
 // timeout et contact fermé ko
 //
 //----------------------------------------------------------------------
-bool teste_transition_7() 
+bool teste_transition_7()
 {
 	bool l_resultat;
-	
-	l_resultat = is_timeout_ecoule() && 
+
+	l_resultat = is_timeout_ecoule() &&
 				!(g_contacteur_porte_fermee->get_etat());
-	
+
 	return l_resultat;
 }
 
@@ -610,10 +763,10 @@ bool teste_transition_7()
 // timeout ET contact ferme ko ET compteur_fermeture < 3
 //
 //----------------------------------------------------------------------
-bool teste_transition_8() 
+bool teste_transition_8()
 {
-	return is_timeout_ecoule() && 
-			!(g_contacteur_porte_fermee->get_etat()) && 
+	return is_timeout_ecoule() &&
+			!(g_contacteur_porte_fermee->get_etat()) &&
 			(g_compteur_fermetures < 3);
 }
 
@@ -623,9 +776,9 @@ bool teste_transition_8()
 // contact ouvert ET pas timeout
 //
 //----------------------------------------------------------------------
-bool teste_transition_9() 
+bool teste_transition_9()
 {
-	return g_contacteur_porte_ouverte->get_etat() && 
+	return g_contacteur_porte_ouverte->get_etat() &&
 			!(is_timeout_ecoule());
 }
 
@@ -635,9 +788,9 @@ bool teste_transition_9()
 // contact fermé ok ET pas timeout
 //
 //----------------------------------------------------------------------
-bool teste_transition_10() 
+bool teste_transition_10()
 {
-	return g_contacteur_porte_fermee->get_etat() && 
+	return g_contacteur_porte_fermee->get_etat() &&
 			!(is_timeout_ecoule());
 }
 
@@ -647,14 +800,14 @@ bool teste_transition_10()
 // timeout ET contact ferme ko ET compteur fermetures = 3
 //
 //----------------------------------------------------------------------
-bool teste_transition_11() 
+bool teste_transition_11()
 {
 	bool l_resultat;
-	
-	l_resultat = is_timeout_ecoule() && 
+
+	l_resultat = is_timeout_ecoule() &&
 				!(g_contacteur_porte_fermee->get_etat()) &&
 				 (g_compteur_fermetures == 3);
-				
+
 	return l_resultat;
 }
 
@@ -664,9 +817,9 @@ bool teste_transition_11()
 // timeout ET contact ouvert KO
 //
 //----------------------------------------------------------------------
-bool teste_transition_12() 
+bool teste_transition_12()
 {
-	return is_timeout_ecoule() && 
+	return is_timeout_ecoule() &&
 			!(g_contacteur_porte_ouverte->get_etat());
 }
 
@@ -676,7 +829,7 @@ bool teste_transition_12()
 // "1"
 //
 //----------------------------------------------------------------------
-bool teste_transition_13() 
+bool teste_transition_13()
 {
 	return true;
 }
@@ -687,7 +840,7 @@ bool teste_transition_13()
 // "1"
 //
 //----------------------------------------------------------------------
-bool teste_transition_14() 
+bool teste_transition_14()
 {
 	return true;
 }
@@ -698,7 +851,7 @@ bool teste_transition_14()
 // timeout et contact ouvert KO
 //
 //----------------------------------------------------------------------
-bool teste_transition_15() 
+bool teste_transition_15()
 {
 	return is_timeout_ecoule() &&
 			!(g_contacteur_porte_ouverte->get_etat());
@@ -710,9 +863,9 @@ bool teste_transition_15()
 // timeout ET contact ouvert ko ET compteur ouverture < 3
 //
 //----------------------------------------------------------------------
-bool teste_transition_16() 
+bool teste_transition_16()
 {
-	return is_timeout_ecoule() && 
+	return is_timeout_ecoule() &&
 			!(g_contacteur_porte_ouverte->get_etat()) &&
 			(g_compteur_ouvertures < 3);
 }
@@ -723,7 +876,7 @@ bool teste_transition_16()
 // "1"
 //
 //----------------------------------------------------------------------
-bool teste_transition_17() 
+bool teste_transition_17()
 {
 	return true;
 }
@@ -734,7 +887,7 @@ bool teste_transition_17()
 // "1"
 //
 //----------------------------------------------------------------------
-bool teste_transition_18() 
+bool teste_transition_18()
 {
 	return true;
 }
@@ -745,71 +898,71 @@ bool teste_transition_18()
 // timeout ET contact ouvert ko ET compteur ouverture =3
 //
 //----------------------------------------------------------------------
-bool teste_transition_19() 
+bool teste_transition_19()
 {
 	bool l_resultat;
-	
-	l_resultat = is_timeout_ecoule() && 
+
+	l_resultat = is_timeout_ecoule() &&
 				!(g_contacteur_porte_ouverte->get_etat()) &&
 				 (g_compteur_ouvertures == 3);
-			
+
 	return l_resultat;
 }
 
 //**********************************************************************
 //
-// Transition entre 14 et 5	
+// Transition entre 14 et 5
 // contact ouvert ok ET pas timeout
 //
 //----------------------------------------------------------------------
-bool teste_transition_20() 
+bool teste_transition_20()
 {
-	return g_contacteur_porte_ouverte->get_etat() && 
+	return g_contacteur_porte_ouverte->get_etat() &&
 			!(is_timeout_ecoule());
 }
 
 //**********************************************************************
 //
-// Transition entre 13 et 14	
+// Transition entre 13 et 14
 // contact fermé ok ET pas timeout
 //
 //----------------------------------------------------------------------
-bool teste_transition_21() 
+bool teste_transition_21()
 {
-	return g_contacteur_porte_fermee->get_etat() && 
+	return g_contacteur_porte_fermee->get_etat() &&
 			!(is_timeout_ecoule());
 }
 
 //**********************************************************************
 //
-// Transition entre 13 et 10	
-// timeout ET contact fermé KO 
+// Transition entre 13 et 10
+// timeout ET contact fermé KO
 //
 //----------------------------------------------------------------------
-bool teste_transition_22() 
+bool teste_transition_22()
 {
-	return is_timeout_ecoule() && 
+	return is_timeout_ecoule() &&
 			!(g_contacteur_porte_fermee->get_etat());
 }
 
 //**********************************************************************
 //
-// Transition entre 15 et 16	
-// "1" 
+// Transition entre 15 et 16
+// "1"
 //
 //----------------------------------------------------------------------
-bool teste_transition_23() 
+bool teste_transition_23()
 {
 	return true;
 }
 
 //**********************************************************************
 //
-// Transition entre 16 et 0	
+// Transition entre 16 et 0
 // bouton raz
 //
 //----------------------------------------------------------------------
-bool teste_transition_24() 
+bool teste_transition_24()
 {
 	return g_bouton_raz->get_etat();
 }
@@ -820,7 +973,7 @@ bool teste_transition_24()
 // bouton ouverture (permet d'entendre de nouveau le message vocal)
 //
 //----------------------------------------------------------------------
-bool teste_transition_25() 
+bool teste_transition_25()
 {
 	return g_bouton_ouverture->get_etat();
 }
@@ -831,9 +984,9 @@ bool teste_transition_25()
 // contact ouvert KO
 //
 //----------------------------------------------------------------------
-bool teste_transition_26() 
+bool teste_transition_26()
 {
-	return !(g_contacteur_porte_ouverte->get_etat()); 
+	return !(g_contacteur_porte_ouverte->get_etat());
 }
 
 //**********************************************************************
@@ -842,9 +995,20 @@ bool teste_transition_26()
 // =1
 //
 //----------------------------------------------------------------------
-bool teste_transition_27() 
+bool teste_transition_27()
 {
 	return true;
+}
+
+//**********************************************************************
+//
+// Transition ARRET URGENCE - depuis tout état de l'automate
+// = Bouton arret_urgence Appuyé
+//
+//----------------------------------------------------------------------
+bool teste_transition_28()
+{
+	return g_bouton_arret_urgence->get_etat();
 }
 
 //**********************************************************************
@@ -861,9 +1025,15 @@ bool teste_transition_27()
 void callback_etat_0()
 {
 	LOG(INFO) << "Appel du callback_etat_0 - Réinitialisation";
+
+	if (g_bouton_raz->get_etat())
+	{
+		beep();
+	}
+
 	g_periode_verification_transitions = G_PERIODE_NORMALE;
 	g_voix->prononcer("Démarrage de l'automate");
-	
+
 
 	// Eteindre le flash d'alerte
 	g_relais_alerte->desactiver();
@@ -875,7 +1045,7 @@ void callback_etat_0()
 
 	// Couper le moteur de la porte
 	g_porte->stopper();
-	
+
 	// On stoppe un éventuel timeout en cours
 	stop_timeout();
 }
@@ -888,6 +1058,12 @@ void callback_etat_0()
 void callback_etat_1() // OK
 {
 	LOG(INFO) << "Appel du callback_etat_1 - Porte fermante";
+
+	if (g_bouton_fermeture->get_etat())
+	{
+		beep();
+	}
+
 	g_periode_verification_transitions = G_PERIODE_TRAVAIL_INTENSE;
 
 	demarrer_timeout(G_DELAI_FERMETURE);
@@ -908,7 +1084,7 @@ void callback_etat_2() // OK
 	LOG(INFO) << "Appel du callback_etat_2 - Porte fermée à temps";
 
 	stop_timeout();
-	g_porte->stopper();	
+	g_porte->stopper();
 }
 
 //**********************************************************************
@@ -933,10 +1109,16 @@ void callback_etat_3() // OK
 void callback_etat_4() // OK
 {
 	LOG(INFO) << "Appel du callback_etat_4 - Porte ouvrante";
+
+	if (g_bouton_ouverture->get_etat())
+	{
+		beep();
+	}
+
 	g_periode_verification_transitions = G_PERIODE_TRAVAIL_INTENSE;
-	
+
 	demarrer_timeout(G_DELAI_OUVERTURE);
-	
+
 	// Ouvrir la porte
 	g_porte->ouvrir();
 
@@ -995,7 +1177,7 @@ void callback_etat_8()
 	g_periode_verification_transitions = G_PERIODE_TRAVAIL_INTENSE;
 
 	demarrer_timeout(G_DELAI_OUVERTURE);
-	
+
 	// Ouvrir la porte
 	g_porte->ouvrir();
 }
@@ -1016,7 +1198,7 @@ void callback_etat_9() // OK
 
 	// Fermer la porte
 	g_porte->fermer();
-	
+
 	g_compteur_fermetures++;
 }
 
@@ -1044,7 +1226,7 @@ void callback_etat_11()
 	LOG(INFO) << "Appel du callback_etat_11 - Blocage en fermeture";
 
 	g_message_vocal="Blocage en fermeture";
-	
+
 	stop_timeout();
 	g_porte->stopper();
 }
@@ -1074,7 +1256,7 @@ void callback_etat_13()
 	g_periode_verification_transitions = G_PERIODE_TRAVAIL_INTENSE;
 
 	demarrer_timeout(G_DELAI_FERMETURE);
-	
+
 	// Fermer la porte
 	g_porte->fermer();
 }
@@ -1095,7 +1277,7 @@ void callback_etat_14() // OK
 
 	// Ouvrir la porte
 	g_porte->ouvrir();
-	
+
 	g_compteur_ouvertures++;
 }
 
@@ -1138,5 +1320,18 @@ void callback_etat_16()
 //----------------------------------------------------------------------
 void callback_etat_17()
 {
-	LOG(INFO) << "Appel du callback_etat_16 - Porte descendue par erreur";
+	LOG(INFO) << "Appel du callback_etat_17 - Porte descendue par erreur";
 }
+
+//**********************************************************************
+//
+// Etat 18 -> ARRET D'URGENCE
+//
+//----------------------------------------------------------------------
+void callback_etat_18()
+{
+	LOG(INFO) << "Appel du callback_etat_18 - ARRET D'URGENCE";
+
+	arret_urgence();
+}
+

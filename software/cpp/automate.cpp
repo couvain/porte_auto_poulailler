@@ -1,6 +1,7 @@
 #include "automate.h"
 #include <iostream>
 #include <string>
+#include <iomanip>
 #include "colors.h"
 #include "log.h"
 
@@ -12,12 +13,12 @@
 CAutomate::CAutomate()
 {
 	int i,j;
-	
+
 	m_etat_actuel = ETAT_AUTOMATE_ETEINT; // L'automate n'est pas démarré
 	m_nb_etats = 0;
 	m_nb_trans = 0;
 	m_etat_final = -1;
-	
+
 	// Réinitialisation de la matrice [etats/transitions]
 	for (i = 0 ; i< NBMAX_ETATS;i++)
 	{
@@ -39,7 +40,7 @@ CAutomate::~CAutomate()
 
 //*****************************************************************************
 //
-// 
+//
 //
 //-----------------------------------------------------------------------------
 int CAutomate::get_etat_actuel()
@@ -59,7 +60,7 @@ int CAutomate::get_nb_transitions_definies_pour_etat_actuel()
 
 	for (i = 0 ; i < m_nb_trans ; i++)
 	{
-		if (m_matrice[m_etat_actuel][i] != TRANSITION_INDEFINIE)
+		if (m_matrice[m_etat_actuel][i] != CAutomate::ETAT_INDEFINI)
 		{
 			l_nb_transitions++;
 		}
@@ -88,7 +89,8 @@ int CAutomate::get_numero_transition_definie(int p_indice)
 	}
 
 	// tant qu'on n'est pas arrivé à la "p_indice"-ième transition définie
-	while ((l_compteur != p_indice) && (i<(NBMAX_TRANS-1)))
+	//while ((l_compteur != p_indice) && (i<(NBMAX_TRANS-1)))
+	while ((l_compteur != p_indice) && (i<(NBMAX_TRANS)))
 	{
 		// On teste la i-ème transition
 		l_etat_suivant = m_matrice[m_etat_actuel][i];
@@ -114,11 +116,11 @@ void CAutomate::set_etat_final(int p_numero_etat_final)
 {
 	if ((p_numero_etat_final < 0) || (p_numero_etat_final >= m_nb_etats))
 	{
-		LOG(WARNING) << "L'état final de l'automate doit être compris entre 0 (inclus) et " << (m_nb_etats-1) << "(inclus)";		
+		LOG(WARNING) << "L'état final de l'automate doit être compris entre 0 (inclus) et " << (m_nb_etats-1) << "(inclus)";
 	}
 	else
 	{
-		LOG(INFO) << "[INFO] Définition de l'état final de l'automate : "<< p_numero_etat_final;		
+		LOG(INFO) << "[INFO] Définition de l'état final de l'automate : "<< p_numero_etat_final;
 		m_etat_final = p_numero_etat_final;
 	}
 }
@@ -150,7 +152,7 @@ void CAutomate::demarre()
 {
 	if (m_etat_actuel == ETAT_AUTOMATE_ETEINT)
 	{
-		LOG(INFO) << "---------------------------------------------------------";		
+		LOG(INFO) << "---------------------------------------------------------";
 		LOG(INFO) << "Démarrage de l'automate";
 		// On se met en état 0 (initial) et on lance la fonction callback associée
 		passe_en_etat(0);
@@ -203,7 +205,7 @@ void CAutomate::callback()
 void CAutomate::affiche()
 {
 	int i,j;
-	
+
 	if (m_etat_actuel == ETAT_AUTOMATE_ETEINT)
 	{
 		std::cout << "Automate arrêté."<< std::endl << std::endl;
@@ -211,26 +213,33 @@ void CAutomate::affiche()
 	else
 	{
 		//std::cout << "[INFO] Automate en etat " << m_etat_actuel << ": " << m_nom_etat[m_etat_actuel] << std::endl << std::endl;
-	
+
+		std::cout << "Transition   ";
+		for (j =0; j < m_nb_trans; j++)
+		{
+			std::cout << std::setw(2) << j << " ";
+		}
+		std::cout << std::endl;
+
 		for (i = 0 ; i< m_nb_etats;i++)
 		{
 			if (i == m_etat_actuel)
 			{
-				std::cout << KBOLD << KRED << "Etat [" << i << "]:  [";
+				std::cout << KBOLD << KRED << "Etat [" << std::setw(2) << i << "]:  [";
 			}
 			else
 			{
-				std::cout << "Etat  " << i << " :  [";
-			}			
+				std::cout << "Etat  " << std::setw(2) << i << " :  [";
+			}
 			for (j =0; j < m_nb_trans; j++)
 			{
 				if (m_matrice[i][j] == ETAT_INDEFINI)
 				{
-					std::cout << "_  ";
+					std::cout << "__ ";
 				}
 				else
 				{
-					std::cout << m_matrice[i][j] << "  ";
+					std::cout << std::setw(2) << m_matrice[i][j] << " ";
 				}
 			}
 			if (i == m_etat_actuel)
@@ -241,16 +250,13 @@ void CAutomate::affiche()
 			{
 				std::cout << "]    " << m_nom_etat[i];
 			}
-			
+
 			if (i == m_etat_final)
 			{
 				std::cout << " FINAL";
 			}
-			
+
 			std::cout << std::endl;
-				
-			
-		
 		} // for
 	}
 	std::cout << std::endl;
@@ -264,10 +270,10 @@ void CAutomate::affiche()
 void CAutomate::ajoute_etat(std::string p_nom_etat, PtrFnctVoidSansParam p_fonction_callback)
 {
 	int l_numero_etat_ajoute;
-	
+
 	l_numero_etat_ajoute = m_nb_etats;
 	if (l_numero_etat_ajoute < NBMAX_ETATS)
-	{		
+	{
 		m_nb_etats++;
 		m_nom_etat[l_numero_etat_ajoute] = p_nom_etat;
 		m_callback[l_numero_etat_ajoute] = p_fonction_callback;
@@ -285,7 +291,7 @@ void CAutomate::ajoute_etat(std::string p_nom_etat, PtrFnctVoidSansParam p_fonct
 // Fonction de construction de l'automate
 //
 //-----------------------------------------------------------------------------
-void CAutomate::ajoute_trans(int p_etat_debut,int p_etat_fin)
+int CAutomate::ajoute_trans(int p_etat_debut,int p_etat_fin)
 {
 	int l_numero_trans_ajoutee;
 
@@ -299,12 +305,47 @@ void CAutomate::ajoute_trans(int p_etat_debut,int p_etat_fin)
 		{
 			m_matrice[p_etat_debut][l_numero_trans_ajoutee] = p_etat_fin;
 			m_nb_trans++;
-			
+
 			LOG(INFO) << "Transition " << l_numero_trans_ajoutee << " ajoutée ( " << p_etat_debut << " -> " << p_etat_fin << " )";
 		}
 		else
 		{
-			LOG(WARNING) << "Impossible d'ajouter la transition " << l_numero_trans_ajoutee << " numéros d'états hors limites";			
+			LOG(WARNING) << "Impossible d'ajouter la transition " << l_numero_trans_ajoutee << " numéros d'états hors limites";
+			return -1;
+		}
+	}
+	else
+	{
+		LOG(WARNING) << "Impossible d'ajouter la transition " << l_numero_trans_ajoutee << " Dépassement de la limite de NBMAX_TRANS=" << NBMAX_TRANS << " transitions possibles";
+		return -1;
+	}
+	return l_numero_trans_ajoutee;
+}
+
+//*****************************************************************************
+//
+// Fonction de construction de l'automate
+//
+//-----------------------------------------------------------------------------
+void CAutomate::ajoute_trans_existante(int p_etat_debut,int p_etat_fin, int p_numero_trans)
+{
+	int l_numero_trans_ajoutee;
+
+	l_numero_trans_ajoutee = p_numero_trans;
+	if (l_numero_trans_ajoutee < NBMAX_TRANS)
+	{
+		if ((p_etat_debut < NBMAX_ETATS) && 
+			(p_etat_fin < NBMAX_ETATS) &&
+			(p_etat_debut >= 0) && 
+			(p_etat_fin >= 0))
+		{
+			m_matrice[p_etat_debut][l_numero_trans_ajoutee] = p_etat_fin;
+
+			LOG(INFO) << "Transition " << l_numero_trans_ajoutee << " ajoutée ( " << p_etat_debut << " -> " << p_etat_fin << " )";
+		}
+		else
+		{
+			LOG(WARNING) << "Impossible d'ajouter la transition " << l_numero_trans_ajoutee << " numéros d'états hors limites";
 		}
 	}
 	else
@@ -321,7 +362,7 @@ void CAutomate::ajoute_trans(int p_etat_debut,int p_etat_fin)
 void CAutomate::execute_trans(int p_numero_trans)
 {
 	int p_etat_suivant = ETAT_INDEFINI;
-	
+
 	if (m_etat_actuel == ETAT_AUTOMATE_ETEINT)
 	{
 		// L'automate est arrêté
@@ -330,23 +371,24 @@ void CAutomate::execute_trans(int p_numero_trans)
 	else
 	{
 		// L'automate est démarré
-		
+
 		if (p_numero_trans == TRANSITION_INDEFINIE)
 		{
 			// Aucune transition n'a été détectée donc on ne fait rien
 			return;
 		}
-		
+
 		if ((p_numero_trans < 0) || (p_numero_trans > m_nb_trans))
 		{
 			LOG(WARNING) << "Impossible d'exécuter la transition " << p_numero_trans << " : hors limites";
 		}
 		else
 		{
-			LOG(INFO) << "---------------------------------------------------------";		
+			LOG(INFO) << "---------------------------------------------------------";
 			LOG(INFO) << "Execution de la transition " << p_numero_trans;
+			std::cout << "Execution de la transition " << p_numero_trans << "\n" << std::endl;
 			p_etat_suivant = m_matrice[m_etat_actuel][p_numero_trans];
-			
+
 			if (p_etat_suivant == ETAT_INDEFINI)
 			{
 				LOG(INFO) << " -> Aucun effet - l'automate reste en état " << m_etat_actuel;
