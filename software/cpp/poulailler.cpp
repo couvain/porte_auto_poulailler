@@ -13,16 +13,12 @@
 #include "voix.h"
 #include "globales.h"
 
-// TODO: Ajouter le timeout aux transitions
-// TODO: revoir précisément chaque callback
 // TODO: Supprimer les logs au fur et à mesure
 // TODO: faire la classe CCapteurNumerique avec I2C
 // TODO: tester systématiquement les allocations de mémoire
 // TODO: faire le script de sauvegarde
 // TODO: utiliser une gestion d'exceptions
 // TODO: faire un schéma électronique de l'automate
-// TODO: Reconcevoir le mouvement de la porte dans l'automate
-// TODO: mettre des messages d'erreur plus clairs / visibles pour l'utilisateur
 
 void initialiser_hardware();
 void liberer_hardware();
@@ -509,7 +505,7 @@ void beep()
 //----------------------------------------------------------------------
 void affiche_compteurs()
 {
-	std::cout << "Tentatives d'ouverture  -> " << g_compteur_ouvertures << std::endl;
+	std::cout << "Tentatives d'ouverture  -> " << g_compteur_ouvertures << "\n";
 	std::cout << "Tentatives de fermeture -> " << g_compteur_fermetures << std::endl;
 }
 

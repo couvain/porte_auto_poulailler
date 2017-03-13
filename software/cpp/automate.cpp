@@ -208,7 +208,7 @@ void CAutomate::affiche()
 
 	if (m_etat_actuel == ETAT_AUTOMATE_ETEINT)
 	{
-		std::cout << "Automate arrêté."<< std::endl << std::endl;
+		std::cout << "Automate arrêté.\n\n";
 	}
 	else
 	{
@@ -256,7 +256,7 @@ void CAutomate::affiche()
 				std::cout << " FINAL";
 			}
 
-			std::cout << std::endl;
+			std::cout << "\n";
 		} // for
 	}
 	std::cout << std::endl;

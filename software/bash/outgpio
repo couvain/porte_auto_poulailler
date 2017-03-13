@@ -5,9 +5,6 @@
 
 # Vérifier que la valeur passée en entrée est bien 0 ou 1
 if [[ $2 = 0 ]] || [[ $2 = 1 ]]; then
-  # Faire un unexport du gpio
-  echo $1 > /sys/class/gpio/unexport
-
   # Ecriture du numéro de GPIO dans le device "export"
   echo $1 > /sys/class/gpio/export
 
