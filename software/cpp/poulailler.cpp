@@ -82,7 +82,7 @@ bool teste_transition_27();
 bool teste_transition_28();
 
 void affiche_compteurs();
-void arret_urgence();
+void arret_urgence(int p_code_sortie);
 void reinitialisation_gpio();
 void demarrer_timeout(int p_duree_secondes);
 bool is_timeout_ecoule();
@@ -152,7 +152,7 @@ int main ()
 void gestion_signal(int p_signal)
 {
 	std::cout << "\nCTRL-C intercepté." << std::endl;
-	arret_urgence();
+	arret_urgence(2);
 	exit(1);
 }
 
@@ -250,7 +250,7 @@ void liberer_hardware()
 // Réinitialisation du Raspberry Pi suite à un arrêt d'urgence
 //
 //----------------------------------------------------------------------
-void arret_urgence()
+void arret_urgence(int p_code_sortie)
 {
 	beep();
 
@@ -261,7 +261,7 @@ void arret_urgence()
 	destruction_objets();
 
 	// Arrêter l'application en renvoyant une valeur spécifique indiquant arrêt d'urgence au script appelant
-	exit(1);
+	exit(p_code_sortie);
 }
 
 //**********************************************************************
@@ -1316,6 +1316,6 @@ void callback_etat_18()
 {
 	LOG(INFO) << "Appel du callback_etat_18 - ARRET D'URGENCE";
 
-	arret_urgence();
+	arret_urgence(1);
 }
 

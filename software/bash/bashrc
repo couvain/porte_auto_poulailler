@@ -21,3 +21,10 @@ play -q ./coq1.wav
 # Extinction de l'amplificateur audio
 ./amplioff
 
+# Lancement du programme "portier"
+./poulailler
+result=$?
+
+if [ $result -eq "1" ]; then
+  halt;
+fi
