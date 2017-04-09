@@ -436,9 +436,13 @@ void boucle_principale()
 
 		g_automate->execute_trans(l_transition);
 		cls();
-		g_automate->affiche();
-		affiche_compteurs();
 
+		//if (g_periode_verification_transitions != G_PERIODE_TRAVAIL_INTENSE)
+		//{
+			// Pas d'affichage en cas de travail intense
+			g_automate->affiche();
+			affiche_compteurs();
+		//}
 		CTemps::attendre(g_periode_verification_transitions); // pause de durée fluctuante
 
 		// A-t-on_terminé l'automate ?
@@ -505,8 +509,23 @@ void beep()
 //----------------------------------------------------------------------
 void affiche_compteurs()
 {
-	std::cout << "Tentatives d'ouverture  -> " << g_compteur_ouvertures << "\n";
-	std::cout << "Tentatives de fermeture -> " << g_compteur_fermetures << std::endl;
+	uint32_t l_luminosite;
+	bool l_matin;
+	bool l_soir;
+
+	l_matin = CTemps::c_est_le_matin();
+	l_soir = CTemps::c_est_le_soir();
+
+
+	std::cout << "Tentatives d'ouverture  -> " << g_compteur_ouvertures;
+	std::cout << "\nTentatives de fermeture -> " << g_compteur_fermetures;
+	l_luminosite = g_capteur_luminosite->litLux(TSL2591_INTEGRATION_TIME_600MS,TSL2591_GAIN_LOW);
+	std::cout << "\nLuminosite -> " << l_luminosite;
+	std::cout << "\nMatin -> " << l_matin;
+	std::cout << "\nSoir  -> " << l_soir;
+	std::cout << "\nContact porte ouverte = " << g_contacteur_porte_ouverte->get_etat();
+	std::cout << "\nPériode  -> " << g_periode_verification_transitions << std::endl;
+
 }
 
 //**********************************************************************
@@ -663,7 +682,7 @@ bool teste_transition_3() // OK
 	bool l_resultat;
 
 
-	l_luminosite = g_capteur_luminosite->litLux(TSL2591_INTEGRATION_TIME_500MS,TSL2591_GAIN_LOW);
+	l_luminosite = g_capteur_luminosite->litLux(TSL2591_INTEGRATION_TIME_600MS,TSL2591_GAIN_LOW);
 	l_seuil_luminosite_atteint = (l_luminosite > G_SEUIL_LUMINOSITE_MATIN);
 	l_matin = CTemps::c_est_le_matin();
 	l_bouton_ouvrir = g_bouton_ouverture->get_etat();
@@ -671,21 +690,21 @@ bool teste_transition_3() // OK
 	l_resultat = l_bouton_ouvrir ||	( l_matin && l_seuil_luminosite_atteint );
 
 	// On affiche si la transition est activée (pour debug)
-	if (l_resultat)
-	{
-		std::cout << "Transition 3 activée" ;
-		std::cout << "\n   -> matin         = " << l_matin;
-		std::cout << "\n   -> seuil lux     = " << l_seuil_luminosite_atteint;
-		if (l_seuil_luminosite_atteint)
-		{
- 			std::cout << "    ( lux = " << l_luminosite << " > seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )";
-		}
-		else
-		{
- 			std::cout << "    ( lux = " << l_luminosite << " < seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )";
-		}
-		std::cout << "\n   -> bouton ouvrir = " << l_bouton_ouvrir << std::endl;
-	}
+	//if (l_resultat)
+	//{
+	//	std::cout << "Transition 3 activée" ;
+	//	std::cout << "\n   -> matin         = " << l_matin;
+	//	std::cout << "\n   -> seuil lux     = " << l_seuil_luminosite_atteint;
+	//	if (l_seuil_luminosite_atteint)
+	//	{
+ 	//		std::cout << "    ( lux = " << l_luminosite << " > seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )";
+	//	}
+	//	else
+	//	{
+ 	//		std::cout << "    ( lux = " << l_luminosite << " < seuil = " << G_SEUIL_LUMINOSITE_MATIN << " )";
+	//	}
+	//	std::cout << "\n   -> bouton ouvrir = " << l_bouton_ouvrir << std::endl;
+	//}
 	return l_resultat;
 }
 
@@ -697,6 +716,8 @@ bool teste_transition_3() // OK
 //----------------------------------------------------------------------
 bool teste_transition_4()
 {
+	LOG(INFO) << "Contact porte ouverte = " << g_contacteur_porte_ouverte->get_etat();
+	std::cout << "Contact porte ouverte = " << g_contacteur_porte_ouverte->get_etat() << std::endl;
 	return g_contacteur_porte_ouverte->get_etat() &&
 	!(is_timeout_ecoule());
 }
@@ -722,7 +743,7 @@ bool teste_transition_6() // OK
 {
 	return g_bouton_fermeture->get_etat() ||
 			(CTemps::c_est_le_soir() &&
-			g_capteur_luminosite->litLux(TSL2591_INTEGRATION_TIME_500MS,TSL2591_GAIN_LOW) < G_SEUIL_LUMINOSITE_SOIR);
+			g_capteur_luminosite->litLux(TSL2591_INTEGRATION_TIME_600MS,TSL2591_GAIN_LOW) < G_SEUIL_LUMINOSITE_SOIR);
 }
 
 //**********************************************************************

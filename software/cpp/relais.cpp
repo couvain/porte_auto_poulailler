@@ -48,7 +48,8 @@ void CRelais::initialiser()
 //----------------------------------------------------------------------
 void CRelais::activer()
 {
-	m_gpio->set_value(true);
+	// Logique inversée à cause de la carte relais utilisée
+	m_gpio->set_value(false);
 	m_etat = CRelais::ETAT_ACTIVE;
 }
 
@@ -59,7 +60,7 @@ void CRelais::activer()
 //----------------------------------------------------------------------
 void CRelais::desactiver()
 {
-	m_gpio->set_value(false);
+	m_gpio->set_value(true);
 	m_etat = CRelais::ETAT_DESACTIVE;
 
 }

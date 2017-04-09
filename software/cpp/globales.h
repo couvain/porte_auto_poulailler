@@ -5,20 +5,21 @@
 
 // Seuils de luminosités pour le matin et pour le soir
 
-const uint32_t G_SEUIL_LUMINOSITE_MATIN = 18; // TODO: mettre une valeur mesurée cohérente
-const uint32_t G_SEUIL_LUMINOSITE_SOIR  = 20; // TODO: mettre une valeur mesurée cohérente
+const uint32_t G_SEUIL_LUMINOSITE_MATIN = 1000; // TODO: mettre une valeur mesurée cohérente
+const uint32_t G_SEUIL_LUMINOSITE_SOIR  = 1000; // TODO: mettre une valeur mesurée cohérente
 
 // Période de scrutation des transitions
 
 const int G_PERIODE_ECONOMIE_ENERGIE = 10000; 	// 10 secondes en mode économie d'énergie
 const int G_PERIODE_NORMALE          = 1000; 	// 1 seconde en mode normal
-const int G_PERIODE_TRAVAIL_INTENSE  = 50;		// 50 ms en mode travail intense
+//const int G_PERIODE_TRAVAIL_INTENSE  = 50;	// 0.05 ms en mode travail intense (1/20s)
+const int G_PERIODE_TRAVAIL_INTENSE  = 20;	// 0.05 ms en mode travail intense (1/50s)
 
 // Durées des timeouts en secondes
 
 const int G_DELAI_REPRISE   = 3;	// 3 secondes
-const int G_DELAI_OUVERTURE = 5;	// 5 secondes TODO à mesurer
-const int G_DELAI_FERMETURE = 5;	// 5 secondes TODO à mesurer
+const int G_DELAI_OUVERTURE = 7;	// 7 secondes TODO à mesurer (3,4 non)
+const int G_DELAI_FERMETURE = 7;	// 7 secondes TODO à mesurer (3,4 non)
 
 // Ports GPIO définis
 

@@ -43,7 +43,7 @@ void CMoteur::initialiser()
 
 //**********************************************************************
 //
-//
+// Ouvrir la porte
 //
 //----------------------------------------------------------------------
 void CMoteur::cabler_en_marche_avant()
@@ -54,7 +54,7 @@ void CMoteur::cabler_en_marche_avant()
 	CTemps::attendre(500); // Pause d'une demi-seconde
 
 	m_relais_inverseur_A->activer();
-	m_relais_inverseur_B->desactiver();
+	m_relais_inverseur_B->activer();
 }
 
 //**********************************************************************
@@ -70,7 +70,7 @@ void CMoteur::cabler_en_marche_arriere()
 	CTemps::attendre(500); // Pause d'une demi-seconde
 
 	m_relais_inverseur_A->desactiver();
-	m_relais_inverseur_B->activer();
+	m_relais_inverseur_B->desactiver();
 }
 //**********************************************************************
 //

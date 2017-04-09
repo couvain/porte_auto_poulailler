@@ -17,8 +17,9 @@ CTSL2591::CTSL2591()
 {
 	m_bus 						= 0;
 	m_tsl2591_initialized 		= false;
-	m_tsl2591_integration_time 	= TSL2591_INTEGRATION_TIME_100MS;
-	m_tsl2591_gain 				= TSL2591_GAIN_LOW;
+	m_tsl2591_integration_time 	= TSL2591_INTEGRATION_TIME_300MS;
+	//m_tsl2591_gain 				= TSL2591_GAIN_LOW;
+	m_tsl2591_gain 				= TSL2591_GAIN_MED;
 }
 
 //**********************************************************************
@@ -341,11 +342,11 @@ float CTSL2591::calculateLux(uint16_t ch0, uint16_t ch1)
 	//uint32_t chan1;
 
 	// Check for overflow conditions first
-	if ((ch0 == 0xFFFF) | (ch1 == 0xFFFF))
-	{
-		LOG(WARNING) << "CTSL2591::calculateLux: OVERFLOW";
-		return 0;
-	}
+	//if ((ch0 == 0xFFFF) | (ch1 == 0xFFFF))
+	//{
+	//	LOG(WARNING) << "CTSL2591::calculateLux: OVERFLOW";
+		//return 0;
+	//}
 
 	switch(m_tsl2591_integration_time)
 	{
@@ -395,7 +396,9 @@ float CTSL2591::calculateLux(uint16_t ch0, uint16_t ch1)
 
 	lux1 = ( (float)ch0 - (TSL2591_LUX_COEFB * (float)ch1) ) / cpl;
 	lux2 = ( (TSL2591_LUX_COEFC * (float)ch0) - (TSL2591_LUX_COEFD * (float)ch1)) / cpl;
+
+	// On prend la plus grande des deux valeurs calculées
 	lux = lux1 > lux2 ? lux1 : lux2;
 
-	return lux;
+	return lux * 20.0;
 }
