@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 #include <time.h>
+#include <sstream>
+#include <iomanip>
 
 //**********************************************************************
 //
@@ -46,21 +48,18 @@ void CTemps::efface_timeout()
 //----------------------------------------------------------------------
 std::string CTemps::heure_complete()
 {
-	std::string l_resultat;
-	time_t l_heure;
-	tm* l_tm;
+        std::ostringstream oss;
+        time_t l_heure;
+        tm* l_tm;
 
-	l_heure = time(0);
-	l_tm = localtime(&l_heure);
+        l_heure = time(0);
+        l_tm = localtime(&l_heure);
 
-	l_resultat = "";
-	l_resultat += l_tm->tm_hour;
-	l_resultat += ":";
-	l_resultat += l_tm->tm_min; 
-	l_resultat += ":";
-	l_resultat += l_tm->tm_sec;
+        oss << std::setfill('0') << std::setw(2) << l_tm->tm_hour << ":"
+            << std::setfill('0') << std::setw(2) << l_tm->tm_min << ":"
+            << std::setfill('0') << std::setw(2) << l_tm->tm_sec;
 
-	return l_resultat;
+        return oss.str();
 }
 
 //**********************************************************************
@@ -70,20 +69,16 @@ std::string CTemps::heure_complete()
 //----------------------------------------------------------------------
 std::string CTemps::heure_prononcable()
 {
-	std::string l_resultat;
-	time_t l_heure;
-	tm* l_tm;
+        std::ostringstream oss;
+        time_t l_heure;
+        tm* l_tm;
 
-	l_heure = time(0);
-	l_tm = localtime(&l_heure);
+        l_heure = time(0);
+        l_tm = localtime(&l_heure);
 
-	l_resultat = "";
-	l_resultat += l_tm->tm_hour;
-	l_resultat += " heures ";
-	l_resultat += l_tm->tm_min;
-	l_resultat += " minutes";
+        oss << l_tm->tm_hour << " heures " << l_tm->tm_min << " minutes";
 
-	return l_resultat;
+        return oss.str();
 }
 
 //**********************************************************************
