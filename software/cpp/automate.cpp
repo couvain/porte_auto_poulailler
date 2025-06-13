@@ -378,7 +378,7 @@ void CAutomate::execute_trans(int p_numero_trans)
 			return;
 		}
 
-		if ((p_numero_trans < 0) || (p_numero_trans > m_nb_trans))
+                if ((p_numero_trans < 0) || (p_numero_trans >= m_nb_trans))
 		{
 			LOG(WARNING) << "Impossible d'exécuter la transition " << p_numero_trans << " : hors limites";
 		}
