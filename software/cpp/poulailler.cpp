@@ -341,8 +341,7 @@ void construction_automate()
 	g_automate->ajoute_trans(17,4);		// Transition 27
 
 	// Création de la transition d'arrêt (d'urgence ?) de l'automate
-	l_no_transition_arret =
-	g_automate->ajoute_trans(0,18);		// Transition 28
+	l_no_transition_arret = g_automate->ajoute_trans(0,18);		// Transition 28
 
 	for (i=1;i<CAutomate::NBMAX_ETATS ;i++)
 	{
